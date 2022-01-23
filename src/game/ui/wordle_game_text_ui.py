@@ -1,4 +1,3 @@
-import sys
 from typing import List
 
 from game.letter_accuracy import is_win, LetterAccuracy
@@ -13,14 +12,14 @@ def get_int(prompt: str, low: int = None, high: int = None) -> int:
         try:
             val_int = int(val)
         except ValueError:
-            print("ERROR: enter only an integer", file=sys.stderr)
+            print("ERROR: enter only an integer")
         else:
             if low is not None and high is not None and not (low <= val_int <= high):
-                print(f"ERROR: enter a number from {low} to {high}", file=sys.stderr)
+                print(f"ERROR: enter a number from {low} to {high}")
             elif low is not None and val_int < low:
-                print(f"ERROR: enter a number {low} or higher", file=sys.stderr)
+                print(f"ERROR: enter a number {low} or higher")
             elif high is not None and val_int > high:
-                print(f"ERROR: enter a number {high} or lower", file=sys.stderr)
+                print(f"ERROR: enter a number {high} or lower")
             else:
                 return val_int
 
@@ -33,7 +32,7 @@ def get_bool(prompt: str) -> bool:
         elif val in ["n", "no", "0"]:
             return False
         else:
-            print("ERROR: enter only 'y' or 'n'", file=sys.stderr)
+            print("ERROR: enter only 'y' or 'n'")
 
 
 class WordleGameTextUI:

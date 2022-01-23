@@ -74,12 +74,13 @@ class WordleGameTextUI:
         if len(board) == 0:
             print("(no previous guesses)")
             return
-        n = len(board[0])
+        n = len(board[0][0])
         line = "-" * n
-        print(line)
+        if not hide_guesses:
+            print(line)
         for guess, result in board:
             if not hide_guesses:
-                print(guess)
+                print(guess.upper())
             cls.print_result(result)
             if not hide_guesses:
                 print(line)
@@ -102,7 +103,7 @@ class WordleGameTextUI:
         while game.has_guesses:
             print(f"{game.n_chars} letters:")
             self.print_board(game.board)
-            print(f"{game.n_guesses_used} of {game.n_guesses} guesses used")
+            print(f"{game.n_guesses_used} of {game.n_guesses} guesses used\n")
             new_guess = input("Enter a word to guess: ")
             try:
                 result = game.make_guess(new_guess)
@@ -119,6 +120,7 @@ class WordleGameTextUI:
                     print(f"{game.n_guesses_used} guesses used\n")
                     print("your board:")
                     self.print_board(game.board, hide_guesses=True)
+                    print()
                     break
             print()
         else:

@@ -6,21 +6,48 @@ from util.word_list import load_word_list
 
 
 class WordleGame:
-    def __init__(self, n_chars: int = 5, n_guesses: Optional[int] = 6, real_word_guesses_only: bool = True):
-        # process args
-        if n_chars < 2:
-            raise ValueError("'n_chars' must be 2 or greater")
-        self.n_chars = n_chars
+    def __init__(self, target_word: str = None, n_chars: int = 5,
+                 n_guesses: Optional[int] = 6, real_word_guesses_only: bool = True):
+        # validate target_word if given, and n_chars if not overridden
+        if target_word is None:
+            if n_chars < 1:
+                raise ValueError("'n_chars' must be 1 or greater")
+            self.n_chars = n_chars
+        else:
+            target_word = target_word.lower()
+            for char in target_word:
+                if char not in ALPHABET:
+                    raise ValueError("'target_word' must contain only letters of the English alphabet.")
+            self.n_chars = len(target_word)
+            if self.n_chars < 1:
+                raise ValueError("'target_word' must contain at least one letter")
+        # validate n_guesses
         if n_guesses is not None and n_guesses < 1:
             raise ValueError("'n_guesses' must be 1 or greater (or None)")
         self.n_guesses = n_guesses
+        # are we only using "real" words?
+        if real_word_guesses_only:
+            # load possible words
+            self._word_list = load_word_list(n_chars)
+            # pick a target word if needed
+            if target_word is None:
+                self._target_word = self._word_list.pop()
+                self._word_list.add(self._target_word)
+            else:
+                # make sure the provided word is listed
+                if target_word not in self._word_list:
+                    # impossible to guess the target_word
+                    raise ValueError("'real_word_guesses_only' was set to True, "
+                                     "but the provided value for 'target_word' is not recognized as a real word.")
+                self._target_word = target_word
+        else:
+            # no need to save the list of possible words
+            self._word_list = None
+            # pick a target word if needed
+            if target_word is None:
+                word_list = load_word_list(n_chars)
+                self._target_word = word_list.pop()
         self.real_word_guesses_only = real_word_guesses_only
-        # load valid words and pick a word to be the target
-        self._word_list = load_word_list(n_chars)
-        if len(self._word_list) == 0:
-            raise ValueError(f"The full word list no words that are {n_chars} letters long.")
-        self._target_word = self._word_list.pop()
-        self._word_list.add(self._target_word)
         # set up vars that will be used while playing
         self.previous_guesses: Dict[str, List[LetterAccuracy]] = dict()
 

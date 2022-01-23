@@ -124,3 +124,8 @@ class WordleGameTextUI:
             print()
         else:
             print("Sorry, you ran out of guesses! You lost")
+
+
+if __name__ == "__main__":
+    game_ui = WordleGameTextUI()
+    game_ui.start()

@@ -60,6 +60,8 @@ class WordleGame:
         return self.n_guesses_remaining > 0
 
     def make_guess(self, new_guess: str) -> List[LetterAccuracy]:
+        if not self.has_guesses:
+            raise ValueError("You have no guesses remaining!")
         # is it even a valid guess?
         new_guess = new_guess.lower()
         for char in new_guess:

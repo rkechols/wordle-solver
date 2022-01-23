@@ -1,8 +1,11 @@
-from typing import Dict, List, Optional
+from typing import List, Optional, Tuple
 
 from game.letter_accuracy import LetterAccuracy
 from util import ALPHABET
 from util.word_list import load_word_list
+
+
+Board = List[Tuple[str, List[LetterAccuracy]]]
 
 
 class WordleGame:
@@ -49,14 +52,22 @@ class WordleGame:
                 self._target_word = word_list.pop()
         self.real_word_guesses_only = real_word_guesses_only
         # set up vars that will be used while playing
-        self.previous_guesses: Dict[str, List[LetterAccuracy]] = dict()
+        self.board: Board = list()
 
     @property
-    def n_guesses_remaining(self) -> int:
-        return self.n_guesses - len(self.previous_guesses)
+    def n_guesses_used(self) -> int:
+        return len(self.board)
+
+    @property
+    def n_guesses_remaining(self) -> Optional[int]:
+        if self.n_guesses is None:  # unlimited guesses
+            return None
+        return self.n_guesses - self.n_guesses_used
 
     @property
     def has_guesses(self) -> bool:
+        if self.n_guesses is None:  # unlimited guesses
+            return True
         return self.n_guesses_remaining > 0
 
     def make_guess(self, new_guess: str) -> List[LetterAccuracy]:
@@ -85,6 +96,6 @@ class WordleGame:
                 accuracy = LetterAccuracy.BLACK
             word_accuracy.append(accuracy)
         # update state of the game
-        self.previous_guesses[new_guess] = word_accuracy
+        self.board.append((new_guess, word_accuracy))
         # let them know their result
         return word_accuracy

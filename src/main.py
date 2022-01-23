@@ -1,6 +1,6 @@
-from util.word_list import WordList
+from game.ui.wordle_game_text_ui import WordleGameTextUI
 
 
 if __name__ == "__main__":
-    words = WordList()
-    print(words)
+    game_ui = WordleGameTextUI()
+    game_ui.start()

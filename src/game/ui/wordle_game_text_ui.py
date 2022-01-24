@@ -55,18 +55,22 @@ class WordleGameTextUI:
         print("--------\n")
 
     def start(self):
-        print("Welcome to WORDLE!\n")
-        self.get_settings()
-        while True:
-            self.run_game()
-            if get_bool("Would you like to play again? "):
-                if get_bool("Would you like to change your settings? "):
-                    self.get_settings()
+        try:
+            print("Welcome to WORDLE!\n")
+            self.get_settings()
+            while True:
+                self.run_game()
+                if get_bool("Would you like to play again? "):
+                    if get_bool("Would you like to change your settings? "):
+                        self.get_settings()
+                    else:
+                        print()
                 else:
-                    print()
-            else:
-                print("\nThanks for playing!")
-                return
+                    print("\nThanks for playing!")
+                    return
+        except KeyboardInterrupt:
+            print("\nThanks for playing!")
+            return
 
     @classmethod
     def print_board(cls, board: Board, hide_guesses: bool = False):
@@ -102,7 +106,10 @@ class WordleGameTextUI:
         while game.has_guesses:
             print(f"{game.n_chars} letters:")
             self.print_board(game.board)
-            print(f"{game.n_guesses_used} of {game.n_guesses} guesses used\n")
+            if game.n_guesses is None:
+                print(f"{game.n_guesses_used} guesses used\n")
+            else:
+                print(f"{game.n_guesses_used} of {game.n_guesses} guesses used\n")
             new_guess = input("Enter a word to guess: ")
             try:
                 result = game.make_guess(new_guess)

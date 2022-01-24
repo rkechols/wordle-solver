@@ -1,38 +1,8 @@
 from typing import List
 
 from game.letter_accuracy import is_win, LetterAccuracy
+from game.ui.util import get_bool, get_settings
 from game.wordle_game import Board, WordleGame
-
-
-def get_int(prompt: str, low: int = None, high: int = None) -> int:
-    if low is not None and high is not None and low >= high:
-        raise ValueError("'low' must be less than 'high'")
-    while True:
-        val = input(prompt)
-        try:
-            val_int = int(val)
-        except ValueError:
-            print("ERROR: enter only an integer")
-        else:
-            if low is not None and high is not None and not (low <= val_int <= high):
-                print(f"ERROR: enter a number from {low} to {high}")
-            elif low is not None and val_int < low:
-                print(f"ERROR: enter a number {low} or higher")
-            elif high is not None and val_int > high:
-                print(f"ERROR: enter a number {high} or lower")
-            else:
-                return val_int
-
-
-def get_bool(prompt: str) -> bool:
-    while True:
-        val = input(prompt).strip().lower()
-        if val in ["y", "yes", "1"]:
-            return True
-        elif val in ["n", "no", "0"]:
-            return False
-        else:
-            print("ERROR: enter only 'y' or 'n'")
 
 
 class WordleGameTextUI:
@@ -41,28 +11,15 @@ class WordleGameTextUI:
         self.n_guesses = 6
         self.real_words_only = True
 
-    def get_settings(self):
-        print("--------")
-        print("SETTINGS")
-        print("--------")
-        self.n_chars = get_int("Number of letters per word: ", low=1)
-        limited_guesses = get_bool("Are guesses limited? ")
-        if limited_guesses:
-            self.n_guesses = get_int("Number of guesses: ", low=1)
-        else:
-            self.n_guesses = None
-        self.real_words_only = get_bool("Only 'real' words are allowed: ")
-        print("--------\n")
-
     def start(self):
         try:
             print("Welcome to WORDLE!\n")
-            self.get_settings()
+            self.n_chars, self.n_guesses, self.real_words_only = get_settings()
             while True:
                 self.run_game()
                 if get_bool("Would you like to play again? "):
                     if get_bool("Would you like to change your settings? "):
-                        self.get_settings()
+                        self.n_chars, self.n_guesses, self.real_words_only = get_settings()
                     else:
                         print()
                 else:

@@ -39,23 +39,30 @@ class WordleSolver:
 
     def word_is_viable(self, word: str, guess: str, result: List[LetterAccuracy],
                        needed_letters: List[str]) -> bool:
-        # does it match all the green letters, and use no black letters?
-        for c_answer, c in zip(self.answer, word):
-            if (c_answer is not None and c_answer != c) or c in self.black_letters:
-                return False
-        # yellow letters:
+        needed_letters = copy(needed_letters)  # don't modify the original
+        # how does this word line up with what we just guessed?
         for guessed_letter, accuracy, c in zip(guess, result, word):
-            if accuracy == LetterAccuracy.YELLOW:
-                # does it avoid using a yellow letter in that exact place?
-                if c == guessed_letter:
+            if accuracy == LetterAccuracy.BLACK and c == guessed_letter:
+                return False  # explicitly marked as a no
+            if accuracy == LetterAccuracy.GREEN:
+                # all green letters need to match
+                if c != guessed_letter:
                     return False
-        # does it have all the yellow letters? (in non-green spots)
-        remaining_needed_letters = copy(needed_letters)
-        for c, accuracy in zip(word, result):
-            if accuracy != LetterAccuracy.GREEN:  # green doesn't count
-                if c in remaining_needed_letters:  # check of the ones we do have
-                    remaining_needed_letters.remove(c)
-        if len(remaining_needed_letters) > 0:  # did we miss any?
+            else:
+                # does it avoid using a yellow letter in that exact place?
+                if accuracy == LetterAccuracy.YELLOW:
+                    if c == guessed_letter:
+                        return False
+                # check off the needed letters we do have
+                if c in needed_letters:
+                    needed_letters.remove(c)
+                else:
+                    # it's not green, and it's not fulfilling a different yellow,
+                    # which means it's a letter that would be new,
+                    # and it can't be one that's been marked black
+                    if c in self.black_letters:
+                        return False
+        if len(needed_letters) > 0:  # did we miss any needed letters?
             return False
         # passes all tests
         return True

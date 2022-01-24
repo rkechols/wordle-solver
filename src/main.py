@@ -8,7 +8,7 @@ from wordle_solver import WordleSolver
 
 
 if __name__ == "__main__":
-    random.seed(42)
+    random.seed(1)
     n_chars = 5
     answer = random.choice(sorted(load_word_list(n_chars)))
     print(f"answer: {answer}\n")

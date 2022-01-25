@@ -11,8 +11,7 @@ from util.word_list import load_word_list
 
 class WordleGame:
 
-    def __init__(self, ui: WordleUI, guesser: Guesser, target_word: str = None,
-                 config: GameConfig = GameConfig()):
+    def __init__(self, ui: WordleUI, guesser: Guesser, config: GameConfig, target_word: str = None):
         self.ui = ui
         self.guesser = guesser
         # validate target_word if given, and n_chars if not overridden

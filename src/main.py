@@ -6,7 +6,6 @@ from guesser.slot_probability_guesser import SlotProbabilityGuesser
 
 
 if __name__ == "__main__":
-    # answer = "anile"
     random.seed(42)
     n_chars = 5
     test_driver = GuesserTestDriver(

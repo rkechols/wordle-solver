@@ -8,9 +8,8 @@ from ui.util import get_bool, get_config
 
 class HumanDriver(WordleDriver):
 
-    def __init__(self):
-        # just default settings
-        self.config = GameConfig()
+    def __init__(self, config: GameConfig = GameConfig()):
+        self.config = config
 
     def start(self):
         try:

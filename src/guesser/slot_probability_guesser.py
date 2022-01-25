@@ -4,14 +4,18 @@ from math import log
 from typing import List
 
 from game.letter_accuracy import LetterAccuracy
+from guesser.guesser import Guesser
 from util.word_list import load_word_list
 
 
-class WordleSolver:
+class SlotProbabilityGuesser(Guesser):
+
     def __init__(self, n_chars: int = 5, real_word_guesses_only: bool = True):
         # TODO: what if real_word_guesses_only is False?
         self.n_chars = n_chars
-        self.remaining_words = load_word_list(n_chars)
+        self._word_list = load_word_list(n_chars)
+        # below is the same content as reset()
+        self.remaining_words = self._word_list
         self.black_letters = set()
         self.answer = [None] * n_chars
 
@@ -37,8 +41,35 @@ class WordleSolver:
                 best_word = word
         return best_word
 
-    def word_is_viable(self, word: str, guess: str, result: List[LetterAccuracy],
-                       needed_letters: List[str]) -> bool:
+    def apply_result(self, guess: str, result: List[LetterAccuracy]):
+        if len(guess) != len(result):
+            raise ValueError("mismatch between length of guess and length of result")
+        needed_letters = list()  # rebuilding this each time only works because we force yellow and green letters to be in our guess
+        # update our info from the new result
+        for i, (c, accuracy) in enumerate(zip(guess, result)):
+            if accuracy == LetterAccuracy.BLACK:
+                self.black_letters.add(c)
+            elif accuracy == LetterAccuracy.GREEN:
+                self.answer[i] = c
+            elif accuracy == LetterAccuracy.YELLOW:
+                needed_letters.append(c)
+            else:
+                raise ValueError(f"Unknown value of LetterAccuracy: {accuracy}")
+        # prune words that don't work anymore
+        new_remaining_words = set()
+        for word in self.remaining_words:
+            if self._word_is_viable(word, guess, result, needed_letters):
+                # it passed all the requirements; keep it
+                new_remaining_words.add(word)
+        self.remaining_words = new_remaining_words
+
+    def reset(self):
+        self.remaining_words = self._word_list
+        self.black_letters = set()
+        self.answer = [None] * self.n_chars
+
+    def _word_is_viable(self, word: str, guess: str, result: List[LetterAccuracy],
+                        needed_letters: List[str]) -> bool:
         needed_letters = copy(needed_letters)  # don't modify the original
         # how does this word line up with what we just guessed?
         for guessed_letter, accuracy, c in zip(guess, result, word):
@@ -66,25 +97,3 @@ class WordleSolver:
             return False
         # passes all tests
         return True
-
-    def apply_result(self, guess: str, result: List[LetterAccuracy]):
-        if len(guess) != len(result):
-            raise ValueError("mismatch between length of guess and length of result")
-        needed_letters = list()  # rebuilding this each time only works because we force yellow and green letters to be in our guess
-        # update our info from the new result
-        for i, (c, accuracy) in enumerate(zip(guess, result)):
-            if accuracy == LetterAccuracy.BLACK:
-                self.black_letters.add(c)
-            elif accuracy == LetterAccuracy.GREEN:
-                self.answer[i] = c
-            elif accuracy == LetterAccuracy.YELLOW:
-                needed_letters.append(c)
-            else:
-                raise ValueError(f"Unknown value of LetterAccuracy: {accuracy}")
-        # prune words that don't work anymore
-        new_remaining_words = set()
-        for word in self.remaining_words:
-            if self.word_is_viable(word, guess, result, needed_letters):
-                # it passed all the requirements; keep it
-                new_remaining_words.add(word)
-        self.remaining_words = new_remaining_words

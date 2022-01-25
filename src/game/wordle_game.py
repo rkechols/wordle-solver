@@ -1,21 +1,25 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
-from game.letter_accuracy import LetterAccuracy
+from game.game_config import GameConfig
+from game.letter_accuracy import is_win, LetterAccuracy
+from game.util import Board, InvalidGuess
+from guesser.guesser import Guesser
+from ui.wordle_ui import WordleUI
 from util import ALPHABET
 from util.word_list import load_word_list
 
 
-Board = List[Tuple[str, List[LetterAccuracy]]]
-
-
 class WordleGame:
-    def __init__(self, target_word: str = None, n_chars: int = 5,
-                 n_guesses: Optional[int] = 6, real_word_guesses_only: bool = True):
+
+    def __init__(self, ui: WordleUI, guesser: Guesser, target_word: str = None,
+                 config: GameConfig = GameConfig()):
+        self.ui = ui
+        self.guesser = guesser
         # validate target_word if given, and n_chars if not overridden
         if target_word is None:
-            if n_chars < 1:
+            if config.n_chars < 1:
                 raise ValueError("'n_chars' must be 1 or greater")
-            self.n_chars = n_chars
+            self.n_chars = config.n_chars
         else:
             target_word = target_word.lower()
             for char in target_word:
@@ -25,13 +29,13 @@ class WordleGame:
             if self.n_chars < 1:
                 raise ValueError("'target_word' must contain at least one letter")
         # validate n_guesses
-        if n_guesses is not None and n_guesses < 1:
+        if config.n_guesses is not None and config.n_guesses < 1:
             raise ValueError("'n_guesses' must be 1 or greater (or None)")
-        self.n_guesses = n_guesses
+        self.n_guesses = config.n_guesses
         # are we only using "real" words?
-        if real_word_guesses_only:
+        if config.real_word_guesses_only:
             # load possible words
-            self._word_list = load_word_list(n_chars)
+            self._word_list = load_word_list(config.n_chars)
             # pick a target word if needed
             if target_word is None:
                 self._target_word = self._word_list.pop()
@@ -48,9 +52,9 @@ class WordleGame:
             self._word_list = None
             # pick a target word if needed
             if target_word is None:
-                word_list = load_word_list(n_chars)
+                word_list = load_word_list(config.n_chars)
                 self._target_word = word_list.pop()
-        self.real_word_guesses_only = real_word_guesses_only
+        self.real_word_guesses_only = config.real_word_guesses_only
         # set up vars that will be used while playing
         self.board: Board = list()
 
@@ -72,23 +76,25 @@ class WordleGame:
 
     def make_guess(self, new_guess: str) -> List[LetterAccuracy]:
         if not self.has_guesses:
-            raise ValueError("You have no guesses remaining!")
+            raise InvalidGuess("You have no guesses remaining!")
         # is it even a valid guess?
         new_guess = new_guess.lower()
         for char in new_guess:
             if char not in ALPHABET:
-                raise ValueError("Your guess must contain only letters of the English alphabet.")
+                raise InvalidGuess("Your guess must contain only letters of the English alphabet.")
         if len(new_guess) != self.n_chars:
-            raise ValueError(f"Your guess must be exactly {self.n_chars} letters long.")
+            raise InvalidGuess(f"Your guess must be exactly {self.n_chars} letters long.")
         if self.real_word_guesses_only and new_guess not in self._word_list:
-            raise ValueError(f"Your input '{new_guess}' is not recognized as a real word.")
+            raise InvalidGuess(f"Your input '{new_guess}' is not recognized as a real word.")
         # where does their guess match the real word?
         word_accuracy = list()
         letters_still_matchable = list(self._target_word)
         for guess_letter, real_letter in zip(new_guess, self._target_word):
             if guess_letter == real_letter:
+                letters_still_matchable.remove(real_letter)  # TODO: MAY THROW ERROR
+        for guess_letter, real_letter in zip(new_guess, self._target_word):
+            if guess_letter == real_letter:
                 accuracy = LetterAccuracy.GREEN
-                letters_still_matchable.remove(real_letter)
             elif guess_letter in letters_still_matchable:
                 accuracy = LetterAccuracy.YELLOW
                 letters_still_matchable.remove(guess_letter)
@@ -99,3 +105,20 @@ class WordleGame:
         self.board.append((new_guess, word_accuracy))
         # let them know their result
         return word_accuracy
+
+    def play(self) -> Optional[int]:
+        while self.has_guesses:
+            self.ui.show_game_state(self.board)
+            new_guess = self.guesser.next_guess()
+            try:
+                result = self.make_guess(new_guess)
+            except InvalidGuess as e:
+                self.ui.show_error(e)
+                continue
+            self.guesser.apply_result(new_guess, result)
+            self.ui.show_result(new_guess, result)
+            if is_win(result):
+                self.ui.show_win(self.board)
+                return self.n_guesses_used
+        self.ui.show_lose()
+        return None

@@ -1,4 +1,8 @@
-from typing import Optional, Tuple
+from typing import List
+
+from game.game_config import GameConfig
+from game.letter_accuracy import LetterAccuracy
+from game.util import Board
 
 
 def get_int(prompt: str, low: int = None, high: int = None) -> int:
@@ -32,7 +36,7 @@ def get_bool(prompt: str) -> bool:
             print("ERROR: enter only 'y' or 'n'")
 
 
-def get_settings() -> Tuple[int, Optional[int], bool]:
+def get_config() -> GameConfig:
     print("--------")
     print("SETTINGS")
     print("--------")
@@ -42,6 +46,35 @@ def get_settings() -> Tuple[int, Optional[int], bool]:
         n_guesses = get_int("Number of guesses: ", low=1)
     else:
         n_guesses = None
-    real_words_only = get_bool("Only 'real' words are allowed: ")
+    real_words_only = get_bool("Only 'real' words are allowed as guesses: ")
     print("--------\n")
-    return n_chars, n_guesses, real_words_only
+    return GameConfig(n_chars, n_guesses, real_words_only)
+
+
+def print_board(board: Board, hide_guesses: bool = False):
+    if len(board) == 0:
+        print("(no previous guesses)")
+        return
+    n = len(board[0][0])
+    line = "-" * n
+    if not hide_guesses:
+        print(line)
+    for guess, result in board:
+        if not hide_guesses:
+            print(guess.upper())
+        print_result(result)
+        if not hide_guesses:
+            print(line)
+
+
+def print_result(result: List[LetterAccuracy]):
+    for accuracy in result:
+        if accuracy == LetterAccuracy.BLACK:
+            print("x", end="")
+        elif accuracy == LetterAccuracy.YELLOW:
+            print("~", end="")
+        elif accuracy == LetterAccuracy.GREEN:
+            print("#", end="")
+        else:
+            raise ValueError(f"Unknown value of LetterAccuracy: {accuracy}")
+    print()

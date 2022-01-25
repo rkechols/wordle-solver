@@ -36,7 +36,7 @@ class SlotProbabilityGuesser(Guesser):
         best_word = None
         for word in self.remaining_words:
             score = sum(these_probs[c] for c, these_probs in zip(word, log_probs))
-            if best_score is None or score > best_score:
+            if best_score is None or score > best_score or (score == best_score and word < best_word):  # TODO: last bit is alphabetical tie-breaker
                 best_score = score
                 best_word = word
         return best_word
